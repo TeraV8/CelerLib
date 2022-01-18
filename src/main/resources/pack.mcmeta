@@ -1,0 +1,7 @@
+{
+    "pack": {
+        "description": "celerlib resources",
+        "pack_format": 3,
+        "_comment": "No resources necessary. This is a library."
+    }
+}
