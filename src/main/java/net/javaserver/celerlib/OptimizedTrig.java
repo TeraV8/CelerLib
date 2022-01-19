@@ -6,6 +6,7 @@ public class OptimizedTrig {
     private static double[] sinResults;
     private static double[] sinFactors;
     private static boolean sinConcurrent = false;
+    private static int sinCached = 0;
     private static double[] cosResults;
     private static double[] cosFactors;
     private static boolean cosConcurrent = false;
@@ -96,12 +97,17 @@ public class OptimizedTrig {
         if (sorted) {
             // go through the cache sorted
             int mindex = 0;
-            int maxdex = cacheSize;
+            int maxdex = Math.min(sinCached, cacheSize - 1);
             do {
                 int probe = (maxdex - mindex) / 2 + mindex;
                 if (sinConcurrent) {
                     // we didn't get to finish our search ;(
                     return Math.sin(in);
+                }
+                if (Double.isNaN(sinFactors[probe])) {
+                    // we cached up here yet
+                    maxdex = probe;
+                    continue;
                 }
                 int cmp = Double.compare(in, sinFactors[probe]);
                 if (cmp == 0) {
@@ -118,6 +124,11 @@ public class OptimizedTrig {
             // now if we haven't found it yet, we've narrowed it down to three positions
             if (sinConcurrent) return Math.sin(in);
             for (;mindex<=maxdex;mindex++) {
+                if (Double.isNaN(sinFactors[mindex])) {
+                    // not found, this is the upper bound of the cache
+                    nextCacheIndex = mindex;
+                    break;
+                }
                 int cmp = Double.compare(in, sinFactors[mindex]);
                 if (cmp == 0) {
                     // this is it!
@@ -154,6 +165,7 @@ public class OptimizedTrig {
             sinFactors[nextCacheIndex] = in;
             sinResults[nextCacheIndex] = result;
             sinConcurrent = false;
+            sinCached++;
         }
         return result;
     }
